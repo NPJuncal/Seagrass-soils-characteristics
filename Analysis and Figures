@@ -4,7 +4,7 @@ R code used fro the article xxxxx
 
 #############################################################
 
-#Setting working directory an reading database
+#Setting working directory an reading database (as a cvs file in this repository)
 
 setwd("C:/Users/npjun/Dropbox/Seagrasses/Review suelos/R")
 
@@ -13,12 +13,14 @@ File<-"TablaG.csv"
 A<-read.csv(File, header=T, sep=";", dec=".")
 A<-as.data.frame(A)
 
-#### descripcion de variables ####
+#### Summary of the variables DBD, Mud, CaCO3, OM and Corg ####
 
 
 Variables<-A[,c(9:13)]
 
 summary(Variables)
+
+#Print summary per genera
 
 X<-split(A, A$Genus)
 
@@ -30,12 +32,14 @@ for(i in 1:length(X)) {
 
 library(ggplot2)
 
+# Summary of the main depth of the soils studied
+
 ggplot(A, aes(x=A$Core.length)) + 
   geom_histogram()
 
 summary(A$Core.length)
 
-### contar numero de observaciones por trait #####
+### Number of observations per variable #####
 
 Regions <-unique(A$Region)
 Bioregion<-unique(A$Bioregion)
@@ -45,7 +49,7 @@ LifeForm<- unique(A$LifeForm)
 
 library(dplyr)
 
-#Regiones
+#By Region
 xDBD<-A %>% group_by(Region) %>% summarise(count = length(DBD[!is.na(DBD)]))
 xMud<-A %>% group_by(Region) %>% summarise(count = length(Mud[!is.na(Mud)]))
 xCaCO3<-A %>% group_by(Region) %>% summarise(count = length(CaCO3[!is.na(CaCO3)]))
@@ -59,7 +63,7 @@ ObsRegion[,c(3)]<-xMud[,2]
 ObsRegion[,c(4)]<-xCaCO3[,2]
 ObsRegion[,c(5)]<-xCorg[,2]
 
-#Bioregiones
+#By Bioregiones
 
 xDBD<-A %>% group_by(Bioregion) %>% summarise(count = length(DBD[!is.na(DBD)]))
 xMud<-A %>% group_by(Bioregion) %>% summarise(count = length(Mud[!is.na(Mud)]))
@@ -74,7 +78,7 @@ ObsBioregion[,c(3)]<-xMud[,2]
 ObsBioregion[,c(4)]<-xCaCO3[,2]
 ObsBioregion[,c(5)]<-xCorg[,2]
 
-#Species
+#By Species
 
 xDBD<-A %>% group_by(Specie) %>% summarise(count = length(DBD[!is.na(DBD)]))
 xMud<-A %>% group_by(Specie) %>% summarise(count = length(Mud[!is.na(Mud)]))
@@ -89,7 +93,7 @@ ObsSpecie[,c(3)]<-xMud[,2]
 ObsSpecie[,c(4)]<-xCaCO3[,2]
 ObsSpecie[,c(5)]<-xCorg[,2]
 
-#Genus
+#By Genera
 
 xDBD<-A %>% group_by(Genus) %>% summarise(count = length(DBD[!is.na(DBD)]))
 xMud<-A %>% group_by(Genus) %>% summarise(count = length(Mud[!is.na(Mud)]))
@@ -104,7 +108,7 @@ ObsGenus[,c(3)]<-xMud[,2]
 ObsGenus[,c(4)]<-xCaCO3[,2]
 ObsGenus[,c(5)]<-xCorg[,2]
 
-#Life form
+#By Life form (classification based in Kilminster et al 2015)
 
 
 xDBD<-A %>% group_by(LifeForm) %>% summarise(count = length(DBD[!is.na(DBD)]))
@@ -121,7 +125,7 @@ ObsLifeForm[,c(4)]<-xCaCO3[,2]
 ObsLifeForm[,c(5)]<-xCorg[,2]
 
 
-### Guardar las tablas 
+### Saving tables
 
 write.csv(ObsBioregion,"ObsBioregion.csv", sep=";", dec=".")
 write.csv(ObsGenus,"ObsGenera.csv", sep=";", dec=".")
@@ -129,53 +133,16 @@ write.csv(ObsLifeForm,"ObsLifeForm.csv", sep=";", dec=".")
 write.csv(ObsRegion,"ObsRegion.csv", sep=";", dec=".")
 
 
-### normalidad ##### (>0.05 normal, <0.05 no normal) Si el test es significativo rechazamos la hipótesis nula de normalidad y por lo tanto los datos no seguirían una distribución normal
+### Check for normality ##### (>0.05 normal, <0.05 no normal)
 
 # global
 shapiro.test(A$DBD)
 plot(density(na.omit(A$Corg)))
 hist(na.omit(A$DBD), breaks=15)
 
+#non of our variables are normally distributed
 
-
-# by LifeForm
-
-X<-split(A, A$LifeForm)
-
-NormLifeForm <- data.frame(LifeForm=character(),
-                 DBD.W=numeric(), 
-                 DBD.p=numeric(),
-                 Mud.W=numeric(), 
-                 Mud.p=numeric(),
-                 CaCo3.W=numeric(), 
-                 CaCo3.p=numeric(),
-                 Corg.W=numeric(), 
-                 Corg.p=numeric()) 
-
-
-
-for(i in 1:length(X)) {
-  NormLifeForm[i,1]<-names(X[i])
-  Data<-as.data.frame(X[i])
-  colnames(Data)<-colnames(A)
-  N<-shapiro.test(na.omit(Data$DBD))
-  NormLifeForm[i,2]<-N$statistic
-  NormLifeForm[i,3]<-N$p.value
-  N<-shapiro.test(Data$Mud)
-  NormLifeForm[i,4]<-N$statistic
-  NormLifeForm[i,5]<-N$p.value
-  N<-shapiro.test(Data$CaCO3)
-  NormLifeForm[i,6]<-N$statistic
-  NormLifeForm[i,7]<-N$p.value
-  N<-shapiro.test(Data$Corg)
-  NormLifeForm[i,8]<-N$statistic
-  NormLifeForm[i,9]<-N$p.value
-
-  }
-
-
-
-###### Homocedasticidad ########
+###### Check for Homocedasticity ########
 
 library(dplyr)
 
@@ -184,61 +151,16 @@ bartlett.test(A$DBD ~ A$LifeForm) ## normal distribution
 library(car)
 leveneTest(y = A$Mud, group = A$LifeForm, center = "median")
 
-#### Data trasformation
+#no homocedasticity
 
-library(moments)
-library(ggpubr)
-
-skewness(A$Mud, na.rm = TRUE)
-
-ggdensity(A, x = "Mud", fill = "lightgray", title = "Mud") +
-  #scale_x_continuous(limits = c(3, 12)) +
-  stat_overlay_normal_density(color = "red", linetype = "dashed")
-
-TA<-A
-
-#log trans
-# positive skewness dataframe$var <- log10(dataframe$var)
-# negative skewness dataframe$var <- log10(max(dataframe$var+1) - dataframe$var)
-
-TA$Mud <- log10(TA$Mud)
-
-TA$DBD<- log10(max(na.omit(TA$DBD)+1) - TA$DBD)
-
-
-# comprobamos si a mejorado
-
-skewness(TA$Mud, na.rm = TRUE)
-
-ggdensity(TA, x = "Mud", fill = "lightgray", title = "Mud") +
-  #scale_x_continuous(limits = c(3, 12)) +
-  stat_overlay_normal_density(color = "red", linetype = "dashed")
-
-shapiro.test(TA$Mud)
-
-
-#### diferencias significativas #### are significantly different (p < 0.05)
+#### Significant differences among groups by wilcox test #### are significantly different (p < 0.05)
 
 
 pairwise.wilcox.test(A$DBD, A$LifeForm,
                      p.adjust.method = "BH")
 
 
-############# 
-
-library(ggplot2)
-
-ggplot(A, aes(A$Mud, A$Corg))+xlab("Mud %") + ylab("Organic carbon %")+
-  geom_point(aes(A$Mud, A$Corg, colour=A$Genus))
-
-
-
-
-
-
-
-### Figuras #####
-
+### Figures #####
 
 library(ggplot2)
 
@@ -315,7 +237,7 @@ ggsave("Corg_LifeForm.jpg", units="cm", width = 20, height = 10)
 
 
 
-#### correlacion corg-mud por genus
+#### correlacion corg-mud by genera
 
 
 X<-split(A, A$Genus)
